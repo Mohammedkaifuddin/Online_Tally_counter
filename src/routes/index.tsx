@@ -1,12 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  CalendarDays,
   Check,
   ChevronDown,
   Minus,
+  Moon,
   Plus,
   RotateCcw,
+  Search,
+  Sun,
   Target,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
@@ -91,6 +96,112 @@ const DEFAULT_ZIKRS: Zikr[] = [
   },
 ];
 
+type IslamicDate = {
+  title: string;
+  hijri: string;
+  gregorian: string;
+  description: string;
+};
+
+const ISLAMIC_DATES_2026: IslamicDate[] = [
+  {
+    title: "Mawlid",
+    hijri: "12 Rabi al-Awwal 1448 AH",
+    gregorian: "25 August 2026 Tue",
+    description:
+      "Commonly observed as the birthday of the Prophet Muhammad (PBUH).",
+  },
+  {
+    title: "Isra Miraj",
+    hijri: "27 Rajab 1448 AH",
+    gregorian: "5 January 2027 Tue",
+    description: "The Night Journey and Ascension.",
+  },
+  {
+    title: "Nisf Sha'ban",
+    hijri: "15 sha'ban 1448 AH",
+    gregorian: "23 January 2027 Sat",
+    description: "The middle night of Sha'ban.",
+  },
+  {
+    title: "Ramadan Begins",
+    hijri: "1 Ramadan 1448 AH",
+    gregorian: "8 February 2027 Mon",
+    description: "The first of Ramadan.",
+  },
+  {
+    title: "Laylat al-Qadr",
+    hijri: "27 Ramadan 1448 AH",
+    gregorian: "6 March 2027 Sat",
+    description:
+      "A commonly observed date for the Night of Decree in the last ten nights of Ramadan.",
+  },
+  {
+    title: "Eid al-Fitr",
+    hijri: "1 Shawwal 1448 AH",
+    gregorian: "9 March 2027 Tue",
+    description: "The festival marking the end of Ramadan.",
+  },
+  {
+    title: "Start of Dhul-Hijjah",
+    hijri: "1 Dhul Hijjah 1448 AH",
+    gregorian: "7 May 2027 Fri",
+    description:
+      "The sacred month that includes Hajj, Arafah, Eid al-Adha, and the Days of Tashriq begins.",
+  },
+  {
+    title: "Hajj begins",
+    hijri: "8 Dhul-Hijjah 1448 AH",
+    gregorian: "14 March 2027 Fri",
+    description: "The major pilgrimage days begin in Makkah.",
+  },
+  {
+    title: "Day of Arafah",
+    hijri: "9 Dhul-Hijjah 1448 AH",
+    gregorian: "15 May 2027 Sat",
+    description:
+      "The central day of Hajj, observed by many Muslims with fasting outside Hajj.",
+  },
+  {
+    title: "Eid al-Adha",
+    hijri: "10 Dhul-Hijjah 1448 AH",
+    gregorian: "16 May 2027 Sun",
+    description:
+      "The Festival of Sacrifice, beginning on the tenth day of Dhul-Hijjah.",
+  },
+  {
+    title: "Days of Tashriq",
+    hijri: "11-13 Dhul-Hijjah 1448 AH",
+    gregorian: "17 - 19 May 2027 Mon - Wed",
+    description: "The three days following Eid al-Adha.",
+  },
+  {
+    title: "Islamic New Year",
+    hijri: "1 Muharram 1449 AH",
+    gregorian: "16 June 2027Sun",
+    description: "The first day of Muharram and the start of a new Hijri year.",
+  },
+  {
+    title: "Tasu'a",
+    hijri: "9 Muharram 1449 AH",
+    gregorian: "14 June 2027 Mon",
+    description:
+      "The ninth day of Muharram, often paired with fasting on Ashura.",
+  },
+  {
+    title: "Ashura",
+    hijri: "10 Muharram 1449 AH",
+    gregorian: "15 June 2027 Tue",
+    description: "The tenth day of Muharram.",
+  },
+  {
+    title: "Mawlid",
+    hijri: "12 Rabi' al-Awwal 1449 AH",
+    gregorian: "14 August 2027 Sat",
+    description: "Commonly observed as the birth date of the Prophet Muhammad(PBUH).",
+  },
+];
+
 const STORAGE_KEY = "tasbeeh.zikrs.v1";
 const SELECTED_KEY = "tasbeeh.selected.v1";
 
@@ -101,10 +212,13 @@ function Index() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [goalOpen, setGoalOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarSearch, setCalendarSearch] = useState("");
   const [newName, setNewName] = useState("");
   const [newArabic, setNewArabic] = useState("");
   const [goalValue, setGoalValue] = useState("");
   const [pulse, setPulse] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   useEffect(() => {
     try {
@@ -167,10 +281,172 @@ function Index() {
     setNewArabic("");
     setAddOpen(false);
   };
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("tasbeeh.theme");
+
+    if (savedTheme === "light" || savedTheme === "dark") {
+      setTheme(savedTheme);
+      document.documentElement.classList.toggle("dark", savedTheme === "dark");
+      return;
+    }
+
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+
+    setTheme(prefersDark ? "dark" : "light");
+
+    document.documentElement.classList.toggle("dark", prefersDark);
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+
+    setTheme(nextTheme);
+    localStorage.setItem("tasbeeh.theme", nextTheme);
+
+    document.documentElement.classList.toggle("dark", nextTheme === "dark");
+  };
+
+  const filteredIslamicDates = ISLAMIC_DATES_2026.filter((date) => {
+    const query = calendarSearch.trim().toLowerCase();
+
+    if (!query) return true;
+
+    return (
+      date.title.toLowerCase().includes(query) ||
+      date.hijri.toLowerCase().includes(query) ||
+      date.gregorian.toLowerCase().includes(query) ||
+      date.description.toLowerCase().includes(query)
+    );
+  });
+
+  if (calendarOpen) {
+    return (
+      <main className="min-h-screen bg-background px-5 py-6 text-foreground transition-colors duration-300">
+        <div className="mx-auto w-full max-w-md">
+          {/* Header */}
+          <header className="mb-8 flex items-center gap-4">
+            <button
+              onClick={() => setCalendarOpen(false)}
+              aria-label="Back to counter"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border transition-colors hover:bg-accent"
+            >
+              ←
+            </button>
+
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
+                Calendar
+              </p>
+
+              <h1 className="text-2xl font-medium">Islamic Dates</h1>
+            </div>
+          </header>
+
+          <div className="mb-5 relative">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+            <Input
+              value={calendarSearch}
+              onChange={(e) => setCalendarSearch(e.target.value)}
+              placeholder="Search Islamic dates..."
+              className="h-12 rounded-2xl pl-11 pr-11"
+            />
+
+            {calendarSearch && (
+              <button
+                type="button"
+                onClick={() => setCalendarSearch("")}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Intro */}
+          <div className="mb-6 rounded-2xl border border-border bg-accent/30 p-5">
+            <p className="text-sm leading-6 text-muted-foreground">
+              Important Islamic dates and observances for 2026.
+            </p>
+
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">
+              Gregorian dates are approximate and may vary according to local
+              moon sighting.
+            </p>
+          </div>
+
+          {/* Dates */}
+          <section className="space-y-3">
+            {filteredIslamicDates.map((date) => (
+              <article
+                key={`${date.title}-${date.hijri}`}
+                className="rounded-2xl border border-border bg-background p-5 transition-colors hover:bg-accent/40"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <span className="text-lg">☾</span>
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <h2 className="font-medium">{date.title}</h2>
+
+                    <p className="mt-1 text-sm text-primary">{date.hijri}</p>
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {date.gregorian}
+                    </p>
+
+                    <p className="mt-3 text-sm leading-5 text-muted-foreground">
+                      {date.description}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </section>
+
+          {/* Footer */}
+          <footer className="py-8 text-center">
+            <p className="text-xs text-muted-foreground">
+              Islamic dates may vary by local moon sighting.
+            </p>
+
+            <p className="mt-2 text-xs text-muted-foreground">
+              Made by{" "}
+              <span className="font-medium text-foreground">
+                Servant of Allah
+              </span>
+            </p>
+          </footer>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between bg-background px-6 py-10 text-foreground select-none">
-      <header className="flex w-full max-w-md flex-col items-center gap-3">
+    <main className="flex min-h-screen flex-col items-center justify-between bg-background px-6 py-10 text-foreground select-none transition-colors duration-300">
+      <header className="relative flex w-full max-w-md flex-col items-center gap-3">
+        <button
+          onClick={() => setCalendarOpen(true)}
+          aria-label="Open Islamic calendar"
+          className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-foreground transition-all duration-200 hover:bg-accent active:scale-95"
+        >
+          <CalendarDays className="h-4 w-4" />
+        </button>
+        <button
+          onClick={toggleTheme}
+          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+          className="absolute right-0 top-0 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-foreground transition-all duration-300 hover:bg-accent active:scale-95"
+        >
+          {theme === "dark" ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
+        </button>
         <p className="text-[11px] tracking-[0.35em] text-muted-foreground uppercase">
           Tasbeeh
         </p>
@@ -355,6 +631,13 @@ function Index() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <footer className="w-full max-w-md pb-2 pt-6 text-center">
+        <p className="text-xs text-muted-foreground">
+          Made with <span className="text-primary">faith</span> by{" "}
+          <span className="font-medium text-foreground">Servant of Allah</span>
+        </p>
+      </footer>
     </main>
   );
 }
