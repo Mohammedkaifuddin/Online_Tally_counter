@@ -205,7 +205,8 @@ const ISLAMIC_DATES_2026: IslamicDate[] = [
     title: "Mawlid",
     hijri: "12 Rabi' al-Awwal 1449 AH",
     gregorian: "14 August 2027 Sat",
-    description: "Commonly observed as the birth date of the Prophet Muhammad(PBUH).",
+    description:
+      "Commonly observed as the birth date of the Prophet Muhammad(PBUH).",
   },
 ];
 
