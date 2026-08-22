@@ -94,6 +94,13 @@ const DEFAULT_ZIKRS: Zikr[] = [
     count: 0,
     goal: 100,
   },
+  {
+    id: "Subhanallahi wa bihamdihi, subhanallahil azim",
+    name: "Subhanallahi wa bihamdihi, Subhanallahil azim",
+    arabic: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، سُبْحَانَ اللَّهِ العَظِيمِ",
+    count: 0,
+    goal: 100,
+  },
 ];
 
 type IslamicDate = {
